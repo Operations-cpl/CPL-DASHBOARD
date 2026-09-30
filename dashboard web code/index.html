@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CPL UNIT DASHBOARD - KPI Operations Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+    }
+    .grid-table th, .grid-table td {
+      border: 1px solid #bae6fd;
+      text-align: center;
+      padding: 6px 8px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .sticky-col-kpi {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      background-color: #f0fdf4;
+      text-align: left !important;
+      min-width: 160px;
+      font-weight: 600;
+    }
+    .sticky-col-unit {
+      position: sticky;
+      left: 160px;
+      z-index: 10;
+      background-color: #f8fafc;
+      min-width: 50px;
+    }
+    .cat-head {
+      background: linear-gradient(90deg, #0284c7, #38bdf8);
+      color: #ffffff;
+      font-weight: 800;
+      text-align: left !important;
+      padding-left: 10px !important;
+      letter-spacing: 0.05em;
+    }
+    .avg-cell {
+      background-color: #fef08a !important;
+      color: #854d0e !important;
+      font-weight: 800;
+    }
+    .score-cell {
+      background-color: #ecfdf5 !important;
+      color: #065f46 !important;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-sky-50 via-sky-100 to-blue-50 text-slate-800 min-h-screen flex flex-col font-sans">
+
+  <!-- TOP HEADER -->
+  <header class="bg-white/95 backdrop-blur-md border-b border-sky-200 px-4 py-3 flex justify-between items-center shadow-sm sticky top-0 z-50">
+    <div class="flex items-center gap-2.5">
+      <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-sky-600 to-cyan-500 text-white flex items-center justify-center font-black shadow-md text-sm">
+        💊
+      </div>
+      <div>
+        <h1 class="text-sm md:text-base font-black text-sky-950 tracking-tight leading-none">CPL UNIT DASHBOARD</h1>
+        <p class="text-[10px] md:text-xs text-sky-600 font-medium mt-0.5">Daily Operations & KPI Monitoring Portal</p>
+      </div>
+    </div>
+    <div id="userHeader" class="hidden flex items-center gap-2">
+      <span id="roleBadge" class="bg-sky-100 border border-sky-300 text-sky-900 text-[11px] px-2.5 py-1 rounded-full font-bold truncate max-w-[160px] md:max-w-none"></span>
+      <button onclick="logout()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-300 text-xs px-2.5 py-1 rounded-lg font-bold transition shadow-sm">Logout</button>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <main class="flex-1 p-3 md:p-6 max-w-7xl mx-auto w-full">
+
+    <!-- 1. LOGIN SCREEN -->
+    <div id="loginScreen" class="max-w-md mx-auto mt-6 md:mt-12 bg-white/95 p-6 md:p-8 rounded-2xl border border-sky-200 shadow-xl backdrop-blur-sm">
+      <div class="text-center mb-6">
+        <span class="text-3xl">🏥</span>
+        <h2 class="text-xl font-black text-slate-800 mt-2">Authentication Portal</h2>
+        <p class="text-xs text-slate-500 mt-1">Please enter your authorized User ID and Password</p>
+      </div>
+
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">User ID</label>
+          <input type="text" id="loginId" required placeholder="Enter User ID" class="w-full bg-slate-50 border border-sky-200 rounded-lg px-3 py-2.5 text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-sky-400 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
+          <input type="password" id="loginPass" required placeholder="••••••••" class="w-full bg-slate-50 border border-sky-200 rounded-lg px-3 py-2.5 text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-sky-400 outline-none">
+        </div>
+        <button type="submit" class="w-full bg-gradient-to-r from-sky-600 to-cyan-500 hover:from-sky-700 hover:to-cyan-600 text-white font-bold py-2.5 rounded-lg transition text-sm shadow-md">
+          Sign In
+        </button>
+      </form>
+
+      <div class="mt-4 text-center">
+        <button onclick="toggleForgotModal(true)" class="text-xs text-sky-600 hover:text-sky-800 font-bold underline">
+          Forgot Administrator Password?
+        </button>
+      </div>
+    </div>
+
+    <!-- FORGOT ADMIN PASSWORD MODAL -->
+    <div id="forgotModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-2xl p-6 max-w-sm w-full border border-sky-200 shadow-2xl">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="font-bold text-slate-800 text-sm">🔑 Administrator Recovery</h3>
+          <button onclick="toggleForgotModal(false)" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+        </div>
+        <p class="text-xs text-slate-500 mb-4">Provide your Master Security Recovery Key to reset credentials.</p>
+        <form onsubmit="handleAdminReset(event)" class="space-y-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Security Recovery Key *</label>
+            <input type="password" id="resetSecKey" required placeholder="Master Recovery Key" class="w-full bg-slate-50 border border-sky-200 rounded px-2.5 py-2 text-xs outline-none focus:bg-white">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">New Administrator ID *</label>
+            <input type="text" id="resetAdminId" required placeholder="admin" class="w-full bg-slate-50 border border-sky-200 rounded px-2.5 py-2 text-xs outline-none focus:bg-white">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">New Password *</label>
+            <input type="password" id="resetAdminPass" required placeholder="New Password" class="w-full bg-slate-50 border border-sky-200 rounded px-2.5 py-2 text-xs outline-none focus:bg-white">
+          </div>
+          <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 rounded text-xs transition shadow">
+            Reset Credentials
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2. UNIT DASHBOARD SCREEN -->
+    <div id="unitScreen" class="hidden space-y-4">
+      <div class="bg-white p-3.5 md:p-4 rounded-xl border border-sky-200 flex flex-wrap justify-between items-center gap-3 shadow-sm">
+        <div>
+          <span class="text-[10px] font-black text-sky-600 uppercase tracking-wider">Store Operations Desk:</span>
+          <h2 id="activeUnitTitle" class="text-base md:text-lg font-black text-slate-800"></h2>
+        </div>
+        <button onclick="exportCurrentUnitExcel()" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg flex items-center gap-1.5 shadow transition">
+          📥 Export Monthly Sheet (.CSV)
+        </button>
+      </div>
+
+      <!-- Daily Form -->
+      <div class="bg-white p-4 md:p-5 rounded-xl border border-sky-200 shadow-sm">
+        <div class="border-b border-sky-100 pb-2 mb-3.5 flex justify-between items-center">
+          <h3 class="text-xs md:text-sm font-bold text-sky-800 flex items-center gap-1.5">
+            <span>📝</span> Daily KPI Closing Submission
+          </h3>
+          <span class="text-[10px] text-slate-400">Selecting a different date refreshes form automatically</span>
+        </div>
+
+        <form onsubmit="saveDailyKPI(event)" class="space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 md:gap-3">
+            <div class="sm:col-span-2 md:col-span-1">
+              <label class="block text-[11px] font-bold text-sky-950 mb-1">Date *</label>
+              <input type="date" id="f_date" required onchange="handleDateChange()" class="w-full bg-sky-50 border border-sky-300 rounded px-2.5 py-2 text-xs text-slate-800 font-bold outline-none focus:ring-1 focus:ring-sky-500">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Opening Time (HH:MM)</label>
+              <input type="time" id="f_openTime" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Closing Time (HH:MM)</label>
+              <input type="time" id="f_closeTime" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Pending Purchase %</label>
+              <input type="number" step="0.1" id="f_pendingPurchase" placeholder="0.0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Daily Rejection %</label>
+              <input type="number" step="0.1" id="f_rejection" placeholder="0.0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Orders Taken (#)</label>
+              <input type="number" id="f_orders" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Home Deliveries (#)</label>
+              <input type="number" id="f_homeDel" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Card Registrations (#)</label>
+              <input type="number" id="f_cards" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">24x7 App Downloads (#)</label>
+              <input type="number" id="f_app" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Daily Calls Made (#)</label>
+              <input type="number" id="f_calls" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Free Health Checks (#)</label>
+              <input type="number" id="f_health" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Pharmacy Sales (₹)</label>
+              <input type="number" step="0.01" id="f_pharmaSales" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Generic Sales (₹)</label>
+              <input type="number" step="0.01" id="f_genericSales" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Diagnostic Sales (₹)</label>
+              <input type="number" step="0.01" id="f_diagSales" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Cendana Sales (₹)</label>
+              <input type="number" step="0.01" id="f_cendanaSales" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Pharmacy Footfall (#)</label>
+              <input type="number" id="f_pharmaFootfall" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-600 font-medium mb-1">Diagnostic Footfall (#)</label>
+              <input type="number" id="f_diagFootfall" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-2 text-xs text-slate-800 outline-none">
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-1">
+            <button type="submit" class="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 text-white font-bold px-6 py-2.5 rounded-lg text-xs transition shadow flex items-center justify-center gap-1.5">
+              💾 Submit & Sync Sheet
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Unit Grid -->
+      <div class="bg-white p-3 md:p-4 rounded-xl border border-sky-200 shadow-sm">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-xs font-bold text-slate-700 uppercase">Monthly Performance Grid (Days 1 - 30 & Average)</h3>
+          <span class="text-[10px] text-slate-400">👉 Swipe horizontally to view full month</span>
+        </div>
+        <div class="overflow-x-auto bg-white rounded border border-sky-200 shadow-sm text-slate-900 max-w-full">
+          <table class="w-full grid-table" id="unitExcelTable"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. MANAGEMENT PORTAL (SUPER ADMIN & AREA MANAGER) -->
+    <div id="adminScreen" class="hidden space-y-4">
+      <div class="flex flex-wrap gap-2 border-b border-sky-200 pb-3 justify-between items-center">
+        <div class="flex flex-wrap gap-1.5 md:gap-2">
+          <button id="adminTab1" onclick="switchAdminTab('reports')" class="px-3.5 py-2 font-bold text-xs rounded-lg bg-sky-600 text-white shadow-sm">
+            📊 Month Grid
+          </button>
+          <button id="adminTab2" onclick="switchAdminTab('overview')" class="px-3.5 py-2 font-bold text-xs rounded-lg bg-white text-slate-700 border border-sky-200 hover:bg-sky-50">
+            🏥 Complete Matrix
+          </button>
+          <!-- Strict Admin-Only Access Tabs -->
+          <button id="adminTab3" onclick="switchAdminTab('manage')" class="admin-only px-3.5 py-2 font-bold text-xs rounded-lg bg-white text-slate-700 border border-sky-200 hover:bg-sky-50">
+            ⚙️ Units
+          </button>
+          <button id="adminTab4" onclick="switchAdminTab('managers')" class="admin-only px-3.5 py-2 font-bold text-xs rounded-lg bg-white text-slate-700 border border-sky-200 hover:bg-sky-50">
+            👔 Area Managers
+          </button>
+          <button id="adminTab5" onclick="switchAdminTab('profile')" class="admin-only px-3.5 py-2 font-bold text-xs rounded-lg bg-white text-slate-700 border border-sky-200 hover:bg-sky-50">
+            🔒 Security
+          </button>
+        </div>
+        <button onclick="manualWeeklyReset()" class="admin-only bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-300 text-xs px-3 py-1.5 rounded-lg font-bold transition shadow-sm">
+          🧹 Archive Week Data
+        </button>
+      </div>
+
+      <!-- TAB 1: SPREADSHEET MONITOR & EXPORT -->
+      <div id="adminViewReports" class="space-y-4">
+        <div class="bg-white p-3.5 md:p-4 rounded-xl border border-sky-200 flex flex-wrap gap-3 items-end justify-between shadow-sm">
+          <div class="flex flex-wrap gap-2.5 items-end w-full sm:w-auto">
+            <div class="flex-1 sm:flex-initial">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Select Unit</label>
+              <select id="adminUnitFilter" onchange="renderAdminGrid()" class="w-full sm:w-auto bg-slate-50 border border-sky-200 rounded-lg px-3 py-1.5 text-xs text-slate-800 outline-none font-semibold">
+                <option value="ALL">All Accessible Units Combined</option>
+              </select>
+            </div>
+            <div class="flex-1 sm:flex-initial">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Month / Year</label>
+              <input type="month" id="adminMonthFilter" onchange="renderAdminGrid()" class="w-full sm:w-auto bg-slate-50 border border-sky-200 rounded-lg px-3 py-1.5 text-xs text-slate-800 outline-none font-semibold">
+            </div>
+          </div>
+          <button onclick="exportAdminDataExcel()" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow transition flex items-center gap-1.5">
+            📥 Export Grid Format (.CSV)
+          </button>
+        </div>
+
+        <div class="bg-white p-3 md:p-4 rounded-xl border border-sky-200 shadow-sm">
+          <div class="overflow-x-auto bg-white rounded border border-sky-200 shadow-sm text-slate-900 max-w-full">
+            <table class="w-full grid-table" id="adminExcelTable"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: COMPLETE MATRIX WITH WORKING AVERAGE PERCENTAGE -->
+      <div id="adminViewOverview" class="hidden space-y-4">
+        <div class="bg-white p-3.5 md:p-4 rounded-xl border border-sky-200 shadow-sm flex flex-wrap justify-between items-end gap-3">
+          <div class="flex flex-wrap items-end gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">From Date</label>
+              <input type="date" id="matrixFromDate" onchange="renderOverviewHub()" class="bg-slate-50 border border-sky-200 rounded px-2.5 py-1.5 text-xs outline-none focus:ring-1 focus:ring-sky-400">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">To Date</label>
+              <input type="date" id="matrixToDate" onchange="renderOverviewHub()" class="bg-slate-50 border border-sky-200 rounded px-2.5 py-1.5 text-xs outline-none focus:ring-1 focus:ring-sky-400">
+            </div>
+            <button onclick="resetMatrixDates()" class="text-xs text-sky-600 hover:text-sky-800 font-bold underline pb-1">
+              Reset Filter
+            </button>
+          </div>
+          <button onclick="exportOverviewMatrixCSV()" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg shadow transition">
+            📥 Export Matrix Data (.CSV)
+          </button>
+        </div>
+
+        <div class="bg-white rounded-xl border border-sky-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700 border-collapse">
+              <thead class="bg-sky-50 border-b border-sky-200 text-slate-600 uppercase text-[10px] whitespace-nowrap">
+                <tr>
+                  <th class="p-2.5 font-bold text-sky-950">Unit Name</th>
+                  <th class="p-2.5">Open Time</th>
+                  <th class="p-2.5">Close Time</th>
+                  <th class="p-2.5 text-right">Pend Purch %</th>
+                  <th class="p-2.5 text-right">Rejection %</th>
+                  <th class="p-2.5 text-right">Orders (#)</th>
+                  <th class="p-2.5 text-right">Home Del (#)</th>
+                  <th class="p-2.5 text-right">Cards (#)</th>
+                  <th class="p-2.5 text-right">App (#)</th>
+                  <th class="p-2.5 text-right">Calls (#)</th>
+                  <th class="p-2.5 text-right">Health (#)</th>
+                  <th class="p-2.5 text-right text-emerald-700">Pharma Sales (₹)</th>
+                  <th class="p-2.5 text-right">Generic Sales (₹)</th>
+                  <th class="p-2.5 text-right">Diag Sales (₹)</th>
+                  <th class="p-2.5 text-right">Cendana Sales (₹)</th>
+                  <th class="p-2.5 text-right font-semibold">Pharma Footfall</th>
+                  <th class="p-2.5 text-right font-semibold">Diag Footfall</th>
+                  <th class="p-2.5 text-right score-cell">Working Avg %</th>
+                </tr>
+              </thead>
+              <tbody id="overviewTableBody" class="divide-y divide-sky-100 whitespace-nowrap"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: MANAGE UNITS (Admin Only) -->
+      <div id="adminViewManage" class="hidden grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="bg-white p-5 rounded-xl border border-sky-200 shadow-sm h-fit">
+          <h3 id="unitFormHeading" class="text-sm font-bold text-sky-950 mb-3 border-b border-sky-100 pb-2">➕ Add Retail Unit</h3>
+          <form onsubmit="handleSaveUnit(event)" class="space-y-3">
+            <input type="hidden" id="editUnitOriginalId" value="">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Unit Display Name</label>
+              <input type="text" id="newUnitName" placeholder="e.g. Unit 4 - Gomti Nagar" required class="w-full bg-slate-50 border border-sky-200 rounded px-3 py-1.5 text-xs text-slate-800 outline-none focus:bg-white">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Login User ID</label>
+              <input type="text" id="newUnitId" placeholder="e.g. cpl04" required class="w-full bg-slate-50 border border-sky-200 rounded px-3 py-1.5 text-xs text-slate-800 outline-none focus:bg-white">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Password</label>
+              <input type="text" id="newUnitPass" placeholder="e.g. pass123" required class="w-full bg-slate-50 border border-sky-200 rounded px-3 py-1.5 text-xs text-slate-800 outline-none focus:bg-white">
+            </div>
+            <div class="flex gap-2">
+              <button type="submit" id="saveUnitBtn" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 rounded text-xs transition shadow">
+                Save Unit
+              </button>
+              <button type="button" id="cancelEditBtn" onclick="resetUnitForm()" class="hidden px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 rounded text-xs transition">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="md:col-span-2 bg-white rounded-xl border border-sky-200 shadow-sm overflow-hidden">
+          <div class="p-3 bg-sky-50/70 border-b border-sky-200 text-xs font-bold text-sky-900">Registered Units & Credentials (Edit / Remove)</div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 uppercase text-[10px] text-slate-500 border-b border-sky-100">
+                <tr>
+                  <th class="p-2.5">Unit Name</th>
+                  <th class="p-2.5">User ID</th>
+                  <th class="p-2.5">Password</th>
+                  <th class="p-2.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="unitListRows" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: MANAGE AREA MANAGERS (Admin Only) -->
+      <div id="adminViewManagers" class="hidden grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="bg-white p-5 rounded-xl border border-sky-200 shadow-sm h-fit">
+          <h3 id="amFormHeading" class="text-sm font-bold text-sky-950 mb-3 border-b border-sky-100 pb-2">➕ Add Area Manager</h3>
+          <form onsubmit="handleSaveManager(event)" class="space-y-3">
+            <input type="hidden" id="editAmOriginalId" value="">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Area Manager Full Name</label>
+              <input type="text" id="amName" placeholder="e.g. Ramesh Kumar" required class="w-full bg-slate-50 border border-sky-200 rounded px-3 py-1.5 text-xs text-slate-800 outline-none focus:bg-white">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Login User ID</label>
+              <input type="text" id="amId" placeholder="e.g. am_east" required class="w-full bg-slate-50 border border-sky-200 rounded px-3 py-1.5 text-xs text-slate-800 outline-none focus:bg-white">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Password</label>
+              <input type="text" id="amPass" placeholder="e.g. am123" required class="w-full bg-slate-50 border border-sky-200 rounded px-3 py-1.5 text-xs text-slate-800 outline-none focus:bg-white">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Assign Supervised Units:</label>
+              <div id="amUnitsCheckboxList" class="max-h-36 overflow-y-auto p-2 border border-sky-100 rounded bg-slate-50 space-y-1.5 text-xs"></div>
+            </div>
+            <div class="flex gap-2">
+              <button type="submit" id="saveAmBtn" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 rounded text-xs transition shadow">
+                Save Area Manager
+              </button>
+              <button type="button" id="cancelEditAmBtn" onclick="resetAmForm()" class="hidden px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 rounded text-xs transition">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="md:col-span-2 bg-white rounded-xl border border-sky-200 shadow-sm overflow-hidden">
+          <div class="p-3 bg-sky-50/70 border-b border-sky-200 text-xs font-bold text-sky-900">Registered Area Managers & Assigned Jurisdictions</div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 uppercase text-[10px] text-slate-500 border-b border-sky-100">
+                <tr>
+                  <th class="p-2.5">Manager Name</th>
+                  <th class="p-2.5">User ID</th>
+                  <th class="p-2.5">Password</th>
+                  <th class="p-2.5">Assigned Units</th>
+                  <th class="p-2.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="amListRows" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: ADMIN SECURITY (Admin Only) -->
+      <div id="adminViewProfile" class="hidden max-w-lg mx-auto bg-white p-6 rounded-xl border border-sky-200 shadow-sm">
+        <h3 class="text-sm font-bold text-sky-950 mb-3 border-b border-sky-100 pb-2">🔒 Administrator Security & Master Recovery</h3>
+        <p class="text-xs text-slate-500 mb-4">Update administrator credentials or configure the secret <strong>Master Recovery Key</strong>.</p>
+        
+        <form onsubmit="handleUpdateAdminCredentials(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Administrator User ID</label>
+            <input type="text" id="adminNewId" required class="w-full bg-slate-50 border border-sky-200 rounded px-3 py-2 text-xs text-slate-800 outline-none focus:bg-white font-semibold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">New Password</label>
+            <input type="password" id="adminNewPass" required placeholder="New Password" class="w-full bg-slate-50 border border-sky-200 rounded px-3 py-2 text-xs text-slate-800 outline-none focus:bg-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Confirm New Password</label>
+            <input type="password" id="adminConfirmPass" required placeholder="Confirm New Password" class="w-full bg-slate-50 border border-sky-200 rounded px-3 py-2 text-xs text-slate-800 outline-none focus:bg-white">
+          </div>
+          <div class="border-t border-sky-100 pt-3">
+            <label class="block text-xs font-bold text-rose-700 mb-1">Master Security Recovery Key</label>
+            <input type="text" id="adminSecKey" required class="w-full bg-rose-50 border border-rose-200 rounded px-3 py-2 text-xs text-rose-900 outline-none font-mono">
+            <span class="text-[10px] text-slate-400 mt-0.5 block">Used for emergency password reset. Default: <code>CPL@SECURITY#2026</code></span>
+          </div>
+          <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-lg text-xs transition shadow">
+            Save Security Settings
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    // METRICS SCHEMA
+    const METRIC_SCHEMA = [
+      { cat: 'OPERATIONS', name: 'Opening Time', unit: 'HH:MM', key: 'openTime', isTime: true },
+      { cat: 'OPERATIONS', name: 'Closing Time', unit: 'HH:MM', key: 'closeTime', isTime: true },
+      { cat: 'PURCHASING', name: 'Pending Purchase %', unit: '%', key: 'pendingPurchase', isNumeric: true },
+      { cat: 'REJECTION', name: 'Daily Rejection %', unit: '%', key: 'rejection', isNumeric: true },
+      { cat: 'ORDERS', name: 'Orders Taken', unit: '#', key: 'orders', isNumeric: true },
+      { cat: 'ORDERS', name: 'Home Deliveries', unit: '#', key: 'homeDel', isNumeric: true },
+      { cat: 'CUSTOMER ENGAGEMENT', name: 'Card Registrations', unit: '#', key: 'cards', isNumeric: true },
+      { cat: 'CUSTOMER ENGAGEMENT', name: '24x7 App Downloads', unit: '#', key: 'app', isNumeric: true },
+      { cat: 'CUSTOMER ENGAGEMENT', name: 'Daily Calls Made', unit: '#', key: 'calls', isNumeric: true },
+      { cat: 'CUSTOMER ENGAGEMENT', name: 'Free Health Check-ups', unit: '#', key: 'health', isNumeric: true },
+      { cat: 'SALES', name: 'Pharmacy Sales (₹)', unit: '₹', key: 'pharmaSales', isNumeric: true },
+      { cat: 'SALES', name: 'Generic Sales (₹)', unit: '₹', key: 'genericSales', isNumeric: true },
+      { cat: 'SALES', name: 'Diagnostic Sales (₹)', unit: '₹', key: 'diagSales', isNumeric: true },
+      { cat: 'SALES', name: 'Cendana Sales (₹)', unit: '₹', key: 'cendanaSales', isNumeric: true },
+      { cat: 'FOOTFALL', name: 'Pharmacy Footfall', unit: '#', key: 'pharmaFootfall', isNumeric: true },
+      { cat: 'FOOTFALL', name: 'Diagnostic Footfall', unit: '#', key: 'diagFootfall', isNumeric: true }
+    ];
+
+    const DEFAULT_UNITS = [
+      { id: 'bahraich', name: 'BAHRAICH', pass: '1234' },
+      { id: 'gonda1', name: 'GONDA-Gonda Bahraich Road', pass: '1234' },
+      { id: 'akbarpur', name: 'AKBARPUR', pass: '1234' },
+      { id: 'ayodhya-mukut', name: 'AYODHYA MUKUT', pass: '1234' },
+      { id: 'ayodhya-devkali', name: 'AYODHYA DEVKALI', pass: '1234' },
+      { id: 'aliganj', name: 'ALIGANJ', pass: '1234' }
+    ];
+
+    let adminCredentials = JSON.parse(localStorage.getItem('cpl_admin_creds') || JSON.stringify({ 
+      id: 'admin', 
+      pass: 'admin123',
+      secKey: 'CPL@SECURITY#2026'
+    }));
+
+    let units = JSON.parse(localStorage.getItem('cpl_units') || JSON.stringify(DEFAULT_UNITS));
+    let managers = JSON.parse(localStorage.getItem('cpl_managers') || '[]');
+    let kpiData = JSON.parse(localStorage.getItem('cpl_kpi_data') || '[]');
+    let currentUser = null;
+
+    // AUTO 7-DAY RESET CHECK
+    function checkWeeklyAutoReset() {
+      const lastReset = localStorage.getItem('cpl_last_reset_time');
+      const now = Date.now();
+      const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+      if (!lastReset) {
+        localStorage.setItem('cpl_last_reset_time', now.toString());
+      } else if (now - parseInt(lastReset) > SEVEN_DAYS_MS) {
+        const limitDate = new Date(now - SEVEN_DAYS_MS).toISOString().split('T')[0];
+        kpiData = kpiData.filter(item => item.date >= limitDate);
+        localStorage.setItem('cpl_kpi_data', JSON.stringify(kpiData));
+        localStorage.setItem('cpl_last_reset_time', now.toString());
+      }
+    }
+    checkWeeklyAutoReset();
+
+    // Default dates initialization
+    document.getElementById('f_date').valueAsDate = new Date();
+    document.getElementById('adminMonthFilter').value = new Date().toISOString().slice(0, 7);
+
+    // DATE CHANGE HANDLER
+    function handleDateChange() {
+      if (!currentUser || currentUser.role !== 'UNIT') return;
+      const selectedDate = document.getElementById('f_date').value;
+      const existing = kpiData.find(d => d.unitId === currentUser.id && d.date === selectedDate);
+
+      if (existing) {
+        document.getElementById('f_openTime').value = existing.openTime || '';
+        document.getElementById('f_closeTime').value = existing.closeTime || '';
+        document.getElementById('f_pendingPurchase').value = existing.pendingPurchase || '';
+        document.getElementById('f_rejection').value = existing.rejection || '';
+        document.getElementById('f_orders').value = existing.orders || '';
+        document.getElementById('f_homeDel').value = existing.homeDel || '';
+        document.getElementById('f_cards').value = existing.cards || '';
+        document.getElementById('f_app').value = existing.app || '';
+        document.getElementById('f_calls').value = existing.calls || '';
+        document.getElementById('f_health').value = existing.health || '';
+        document.getElementById('f_pharmaSales').value = existing.pharmaSales || '';
+        document.getElementById('f_genericSales').value = existing.genericSales || '';
+        document.getElementById('f_diagSales').value = existing.diagSales || '';
+        document.getElementById('f_cendanaSales').value = existing.cendanaSales || '';
+        document.getElementById('f_pharmaFootfall').value = existing.pharmaFootfall || '';
+        document.getElementById('f_diagFootfall').value = existing.diagFootfall || '';
+      } else {
+        clearFormInputs();
+      }
+    }
+
+    function clearFormInputs() {
+      document.getElementById('f_openTime').value = '';
+      document.getElementById('f_closeTime').value = '';
+      document.getElementById('f_pendingPurchase').value = '';
+      document.getElementById('f_rejection').value = '';
+      document.getElementById('f_orders').value = '';
+      document.getElementById('f_homeDel').value = '';
+      document.getElementById('f_cards').value = '';
+      document.getElementById('f_app').value = '';
+      document.getElementById('f_calls').value = '';
+      document.getElementById('f_health').value = '';
+      document.getElementById('f_pharmaSales').value = '';
+      document.getElementById('f_genericSales').value = '';
+      document.getElementById('f_diagSales').value = '';
+      document.getElementById('f_cendanaSales').value = '';
+      document.getElementById('f_pharmaFootfall').value = '';
+      document.getElementById('f_diagFootfall').value = '';
+    }
+
+    // FORGOT ADMIN PASSWORD
+    function toggleForgotModal(show) {
+      const modal = document.getElementById('forgotModal');
+      if (show) modal.classList.remove('hidden');
+      else modal.classList.add('hidden');
+    }
+
+    function handleAdminReset(e) {
+      e.preventDefault();
+      const inputSecKey = document.getElementById('resetSecKey').value.trim();
+      const newAdminId = document.getElementById('resetAdminId').value.trim();
+      const newAdminPass = document.getElementById('resetAdminPass').value.trim();
+
+      const validSecKey = adminCredentials.secKey || 'CPL@SECURITY#2026';
+
+      if (inputSecKey !== validSecKey) {
+        alert('Invalid Security Recovery Key!');
+        return;
+      }
+
+      adminCredentials.id = newAdminId;
+      adminCredentials.pass = newAdminPass;
+      localStorage.setItem('cpl_admin_creds', JSON.stringify(adminCredentials));
+
+      alert('Administrator Credentials successfully reset!');
+      toggleForgotModal(false);
+      document.getElementById('loginId').value = newAdminId;
+      document.getElementById('loginPass').value = '';
+    }
+
+    // LOGIN DISPATCHER
+    function handleLogin(e) {
+      e.preventDefault();
+      const uId = document.getElementById('loginId').value.trim();
+      const pass = document.getElementById('loginPass').value.trim();
+
+      if (uId.toLowerCase() === adminCredentials.id.toLowerCase() && pass === adminCredentials.pass) {
+        currentUser = { role: 'ADMIN', name: 'Super Admin' };
+        setupAdminView();
+        return;
+      }
+
+      const foundAM = managers.find(m => m.id.toLowerCase() === uId.toLowerCase() && m.pass === pass);
+      if (foundAM) {
+        currentUser = { role: 'MANAGER', id: foundAM.id, name: foundAM.name, assignedUnits: foundAM.assignedUnits || [] };
+        setupAdminView();
+        return;
+      }
+
+      const foundUnit = units.find(u => u.id.toLowerCase() === uId.toLowerCase() && u.pass === pass);
+      if (foundUnit) {
+        currentUser = { role: 'UNIT', id: foundUnit.id, name: foundUnit.name };
+        setupUnitView();
+        return;
+      }
+
+      alert('Invalid User ID or Password!');
+    }
+
+    function logout() {
+      currentUser = null;
+      document.getElementById('loginScreen').classList.remove('hidden');
+      document.getElementById('unitScreen').classList.add('hidden');
+      document.getElementById('adminScreen').classList.add('hidden');
+      document.getElementById('userHeader').classList.add('hidden');
+      document.getElementById('loginId').value = '';
+      document.getElementById('loginPass').value = '';
+    }
+
+    // UNIT SCREEN
+    function setupUnitView() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('unitScreen').classList.remove('hidden');
+      document.getElementById('userHeader').classList.remove('hidden');
+      document.getElementById('roleBadge').innerText = '🏬 ' + currentUser.name;
+      document.getElementById('activeUnitTitle').innerText = currentUser.name.toUpperCase() + " · DAILY KPI REPORT";
+      handleDateChange();
+      renderUnitGrid();
+    }
+
+    function saveDailyKPI(e) {
+      e.preventDefault();
+      const dateVal = document.getElementById('f_date').value;
+
+      const entry = {
+        date: dateVal,
+        unitId: currentUser.id,
+        unitName: currentUser.name,
+        openTime: document.getElementById('f_openTime').value || '',
+        closeTime: document.getElementById('f_closeTime').value || '',
+        pendingPurchase: parseFloat(document.getElementById('f_pendingPurchase').value) || 0,
+        rejection: parseFloat(document.getElementById('f_rejection').value) || 0,
+        orders: parseFloat(document.getElementById('f_orders').value) || 0,
+        homeDel: parseFloat(document.getElementById('f_homeDel').value) || 0,
+        cards: parseFloat(document.getElementById('f_cards').value) || 0,
+        app: parseFloat(document.getElementById('f_app').value) || 0,
+        calls: parseFloat(document.getElementById('f_calls').value) || 0,
+        health: parseFloat(document.getElementById('f_health').value) || 0,
+        pharmaSales: parseFloat(document.getElementById('f_pharmaSales').value) || 0,
+        genericSales: parseFloat(document.getElementById('f_genericSales').value) || 0,
+        diagSales: parseFloat(document.getElementById('f_diagSales').value) || 0,
+        cendanaSales: parseFloat(document.getElementById('f_cendanaSales').value) || 0,
+        pharmaFootfall: parseFloat(document.getElementById('f_pharmaFootfall').value) || 0,
+        diagFootfall: parseFloat(document.getElementById('f_diagFootfall').value) || 0
+      };
+
+      const existingIndex = kpiData.findIndex(d => d.unitId === currentUser.id && d.date === dateVal);
+      if (existingIndex !== -1) {
+        kpiData[existingIndex] = entry;
+      } else {
+        kpiData.push(entry);
+      }
+
+      localStorage.setItem('cpl_kpi_data', JSON.stringify(kpiData));
+      alert('KPI Record Successfully Saved for ' + dateVal);
+      renderUnitGrid();
+    }
+
+    // HTML SPREADSHEET BUILDER
+    function buildGridHTML(records, totalDays = 30) {
+      let thead = `<thead class="bg-[#0284c7] text-white">
+        <tr>
+          <th class="p-2 sticky-col-kpi bg-[#0284c7] text-white">KPI</th>
+          <th class="sticky-col-unit bg-[#0284c7] text-white">Unit</th>`;
+      for (let i = 1; i <= totalDays; i++) {
+        thead += `<th class="w-8">${i}</th>`;
+      }
+      thead += `<th class="w-20 avg-cell">Monthly Avg</th></tr></thead><tbody>`;
+
+      let tbody = '';
+      let currentCategory = '';
+
+      METRIC_SCHEMA.forEach(metric => {
+        if (metric.cat !== currentCategory) {
+          tbody += `<tr><td colspan="${totalDays + 3}" class="cat-head">${metric.cat}</td></tr>`;
+          currentCategory = metric.cat;
+        }
+
+        let dayValues = [];
+        let filledCount = 0;
+        let sum = 0;
+
+        for (let d = 1; d <= totalDays; d++) {
+          const rec = records.find(r => new Date(r.date).getDate() === d);
+          if (rec && rec[metric.key] !== undefined && rec[metric.key] !== '') {
+            dayValues.push(rec[metric.key]);
+            if (metric.isNumeric) {
+              const val = parseFloat(rec[metric.key]);
+              sum += val;
+              if (val !== 0) filledCount++;
+            }
+          } else {
+            dayValues.push('');
+          }
+        }
+
+        let avgText = '-';
+        if (metric.isNumeric) {
+          if (filledCount > 0) {
+            const rawAvg = sum / filledCount;
+            avgText = (metric.unit === '₹') ? Math.round(rawAvg).toLocaleString('en-IN') : rawAvg.toFixed(1);
+          } else {
+            avgText = '0.0';
+          }
+        } else if (metric.isTime) {
+          const validTimes = dayValues.filter(t => t && t.includes(':'));
+          if (validTimes.length > 0) {
+            let totalMins = 0;
+            validTimes.forEach(t => {
+              const parts = t.split(':');
+              totalMins += parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            });
+            const avgMins = Math.round(totalMins / validTimes.length);
+            const hrs = String(Math.floor(avgMins / 60)).padStart(2, '0');
+            const mins = String(avgMins % 60).padStart(2, '0');
+            avgText = `${hrs}:${mins}`;
+          }
+        }
+
+        tbody += `<tr class="hover:bg-sky-50/50">
+          <td class="sticky-col-kpi">${metric.name}</td>
+          <td class="sticky-col-unit text-slate-500 font-mono text-[10px]">${metric.unit}</td>`;
+
+        dayValues.forEach(val => {
+          tbody += `<td class="text-slate-800 font-mono">${val !== '' ? val : ''}</td>`;
+        });
+
+        tbody += `<td class="avg-cell">${avgText}</td></tr>`;
+      });
+
+      tbody += '</tbody>';
+      return thead + tbody;
+    }
+
+    function renderUnitGrid() {
+      const records = kpiData.filter(d => d.unitId === currentUser.id);
+      document.getElementById('unitExcelTable').innerHTML = buildGridHTML(records);
+    }
+
+    // ACCESSIBLE UNITS HELPER
+    function getAccessibleUnits() {
+      if (currentUser.role === 'ADMIN') return units;
+      if (currentUser.role === 'MANAGER') {
+        const assignedIds = currentUser.assignedUnits || [];
+        return units.filter(u => assignedIds.includes(u.id));
+      }
+      return [];
+    }
+
+    // ADMIN & AREA MANAGER SUITE
+    function setupAdminView() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('adminScreen').classList.remove('hidden');
+      document.getElementById('userHeader').classList.remove('hidden');
+
+      if (currentUser.role === 'ADMIN') {
+        document.getElementById('roleBadge').innerText = '🛡️ Super Admin';
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+        document.getElementById('adminNewId').value = adminCredentials.id;
+        document.getElementById('adminSecKey').value = adminCredentials.secKey || 'CPL@SECURITY#2026';
+        renderUnitsTable();
+        renderManagersTable();
+        populateAmUnitCheckboxes();
+      } else {
+        document.getElementById('roleBadge').innerText = '👔 AM: ' + currentUser.name;
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+      }
+
+      populateAdminDropdown();
+      renderAdminGrid();
+      renderOverviewHub();
+    }
+
+    function switchAdminTab(tab) {
+      const tabs = ['reports', 'overview', 'manage', 'managers', 'profile'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('adminTab' + (t === 'reports' ? '1' : t === 'overview' ? '2' : t === 'manage' ? '3' : t === 'managers' ? '4' : '5'));
+        const view = document.getElementById(t === 'reports' ? 'adminViewReports' : t === 'overview' ? 'adminViewOverview' : t === 'manage' ? 'adminViewManage' : t === 'managers' ? 'adminViewManagers' : 'adminViewProfile');
+        
+        if (btn && view) {
+          if (t === tab) {
+            btn.className = "px-3.5 py-2 font-bold text-xs rounded-lg bg-sky-600 text-white shadow-sm";
+            view.classList.remove('hidden');
+          } else {
+            btn.className = "px-3.5 py-2 font-bold text-xs rounded-lg bg-white text-slate-700 border border-sky-200 hover:bg-sky-50 " + (btn.classList.contains('admin-only') ? 'admin-only' : '');
+            view.classList.add('hidden');
+          }
+        }
+      });
+
+      if (tab === 'reports') renderAdminGrid();
+      if (tab === 'overview') renderOverviewHub();
+      if (tab === 'manage') renderUnitsTable();
+      if (tab === 'managers') { renderManagersTable(); populateAmUnitCheckboxes(); }
+    }
+
+    function populateAdminDropdown() {
+      const sel = document.getElementById('adminUnitFilter');
+      sel.innerHTML = '<option value="ALL">All Accessible Units Combined</option>';
+      const allowedUnits = getAccessibleUnits();
+      allowedUnits.forEach(u => {
+        sel.innerHTML += `<option value="${u.id}">${u.name}</option>`;
+      });
+    }
+
+    function renderAdminGrid() {
+      const uFilter = document.getElementById('adminUnitFilter').value;
+      const mFilter = document.getElementById('adminMonthFilter').value;
+      const allowedUnits = getAccessibleUnits();
+      const allowedIds = allowedUnits.map(u => u.id);
+
+      let filtered = kpiData.filter(d => {
+        if (!allowedIds.includes(d.unitId)) return false;
+        let matchUnit = (uFilter === 'ALL' || d.unitId === uFilter);
+        let matchMonth = (!mFilter || d.date.startsWith(mFilter));
+        return matchUnit && matchMonth;
+      });
+
+      document.getElementById('adminExcelTable').innerHTML = buildGridHTML(filtered);
+    }
+
+    // MATRIX DATE RANGE FILTER HANDLERS
+    function resetMatrixDates() {
+      document.getElementById('matrixFromDate').value = '';
+      document.getElementById('matrixToDate').value = '';
+      renderOverviewHub();
+    }
+
+    // CALCULATION HELPER: COMPUTES WORKING AVERAGE SCORE PERCENTAGE
+    function computeWorkingAvgPercentage(uRecs) {
+      if (!uRecs || uRecs.length === 0) return '0.0%';
+
+      let rejSum = 0, pendSum = 0, footfallSum = 0, orderSum = 0;
+      uRecs.forEach(r => {
+        rejSum += (r.rejection || 0);
+        pendSum += (r.pendingPurchase || 0);
+        footfallSum += (r.pharmaFootfall || 0);
+        orderSum += (r.orders || 0);
+      });
+
+      const avgRej = rejSum / uRecs.length;
+      const avgPend = pendSum / uRecs.length;
+      
+      // Standard Retail Operational Performance Index (Max 100%)
+      // High Pending & High Rejection decrease score; Conversion ratio boosts score
+      const conversionFactor = footfallSum > 0 ? Math.min((orderSum / footfallSum) * 100, 100) : 50;
+      let score = 100 - (avgRej * 1.5) - (avgPend * 0.3) + (conversionFactor * 0.2);
+      score = Math.max(0, Math.min(100, score));
+
+      return score.toFixed(1) + '%';
+    }
+
+    function renderOverviewHub() {
+      const tbody = document.getElementById('overviewTableBody');
+      const allowedUnits = getAccessibleUnits();
+
+      if (allowedUnits.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="18" class="p-4 text-center text-slate-400">No units assigned to your jurisdiction.</td></tr>`;
+        return;
+      }
+
+      const fromDate = document.getElementById('matrixFromDate').value;
+      const toDate = document.getElementById('matrixToDate').value;
+
+      tbody.innerHTML = allowedUnits.map(u => {
+        let uRecs = kpiData.filter(d => d.unitId === u.id);
+
+        if (fromDate) uRecs = uRecs.filter(d => d.date >= fromDate);
+        if (toDate) uRecs = uRecs.filter(d => d.date <= toDate);
+
+        let uPharma = 0, uGeneric = 0, uDiag = 0, uCendana = 0, uOrders = 0, uHome = 0;
+        let uCards = 0, uApp = 0, uCalls = 0, uHealth = 0;
+        let uFootfall = 0, uDiagFootfall = 0, rejSum = 0, pendSum = 0;
+        let lastOpen = '-', lastClose = '-';
+
+        if (uRecs.length > 0) {
+          const sorted = [...uRecs].sort((a,b) => b.date.localeCompare(a.date));
+          lastOpen = sorted[0].openTime || '-';
+          lastClose = sorted[0].closeTime || '-';
+
+          uRecs.forEach(r => {
+            uPharma += (r.pharmaSales || 0);
+            uGeneric += (r.genericSales || 0);
+            uDiag += (r.diagSales || 0);
+            uCendana += (r.cendanaSales || 0);
+            uOrders += (r.orders || 0);
+            uHome += (r.homeDel || 0);
+            uCards += (r.cards || 0);
+            uApp += (r.app || 0);
+            uCalls += (r.calls || 0);
+            uHealth += (r.health || 0);
+            uFootfall += (r.pharmaFootfall || 0);
+            uDiagFootfall += (r.diagFootfall || 0);
+            rejSum += (r.rejection || 0);
+            pendSum += (r.pendingPurchase || 0);
+          });
+        }
+
+        const avgRej = uRecs.length > 0 ? (rejSum / uRecs.length).toFixed(1) : '0.0';
+        const avgPend = uRecs.length > 0 ? (pendSum / uRecs.length).toFixed(1) : '0.0';
+        const workingAvgPct = computeWorkingAvgPercentage(uRecs);
+
+        return `
+          <tr class="hover:bg-sky-50/70 transition">
+            <td class="p-2.5 font-bold text-sky-950">${u.name} <span class="text-[10px] text-slate-400 font-mono">(${u.id})</span></td>
+            <td class="p-2.5 font-mono text-slate-600">${lastOpen}</td>
+            <td class="p-2.5 font-mono text-slate-600">${lastClose}</td>
+            <td class="p-2.5 text-right font-mono">${avgPend}%</td>
+            <td class="p-2.5 text-right font-mono text-rose-600 font-bold">${avgRej}%</td>
+            <td class="p-2.5 text-right font-semibold">${uOrders}</td>
+            <td class="p-2.5 text-right font-semibold text-amber-700">${uHome}</td>
+            <td class="p-2.5 text-right">${uCards}</td>
+            <td class="p-2.5 text-right">${uApp}</td>
+            <td class="p-2.5 text-right">${uCalls}</td>
+            <td class="p-2.5 text-right">${uHealth}</td>
+            <td class="p-2.5 text-right font-bold text-emerald-700">₹${Math.round(uPharma).toLocaleString('en-IN')}</td>
+            <td class="p-2.5 text-right">₹${Math.round(uGeneric).toLocaleString('en-IN')}</td>
+            <td class="p-2.5 text-right">₹${Math.round(uDiag).toLocaleString('en-IN')}</td>
+            <td class="p-2.5 text-right">₹${Math.round(uCendana).toLocaleString('en-IN')}</td>
+            <td class="p-2.5 text-right font-semibold">${uFootfall}</td>
+            <td class="p-2.5 text-right font-semibold">${uDiagFootfall}</td>
+            <td class="p-2.5 text-right score-cell font-mono">${workingAvgPct}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // MANAGE UNITS
+    function handleSaveUnit(e) {
+      e.preventDefault();
+      const origId = document.getElementById('editUnitOriginalId').value;
+      const name = document.getElementById('newUnitName').value.trim();
+      const id = document.getElementById('newUnitId').value.trim().toLowerCase();
+      const pass = document.getElementById('newUnitPass').value.trim();
+
+      if (origId) {
+        const idx = units.findIndex(u => u.id === origId);
+        if (idx !== -1) {
+          units[idx] = { id, name, pass };
+          if (origId !== id) {
+            kpiData.forEach(d => {
+              if (d.unitId === origId) { d.unitId = id; d.unitName = name; }
+            });
+            localStorage.setItem('cpl_kpi_data', JSON.stringify(kpiData));
+          }
+          alert('Unit successfully updated!');
+        }
+      } else {
+        if (units.some(u => u.id === id)) {
+          alert('Unit ID already exists!');
+          return;
+        }
+        units.push({ id, name, pass });
+        alert('New unit added successfully!');
+      }
+
+      localStorage.setItem('cpl_units', JSON.stringify(units));
+      resetUnitForm();
+      renderUnitsTable();
+      populateAdminDropdown();
+      populateAmUnitCheckboxes();
+    }
+
+    function editUnit(id) {
+      const u = units.find(item => item.id === id);
+      if (!u) return;
+      document.getElementById('editUnitOriginalId').value = u.id;
+      document.getElementById('newUnitName').value = u.name;
+      document.getElementById('newUnitId').value = u.id;
+      document.getElementById('newUnitPass').value = u.pass;
+      document.getElementById('unitFormHeading').innerText = '✏️ Edit Unit Configuration';
+      document.getElementById('saveUnitBtn').innerText = 'Update Unit';
+      document.getElementById('cancelEditBtn').classList.remove('hidden');
+    }
+
+    function resetUnitForm() {
+      document.getElementById('editUnitOriginalId').value = '';
+      document.getElementById('newUnitName').value = '';
+      document.getElementById('newUnitId').value = '';
+      document.getElementById('newUnitPass').value = '';
+      document.getElementById('unitFormHeading').innerText = '➕ Add Retail Unit';
+      document.getElementById('saveUnitBtn').innerText = 'Save Unit';
+      document.getElementById('cancelEditBtn').classList.add('hidden');
+    }
+
+    function deleteUnit(id) {
+      if (confirm('Are you sure you want to delete this unit?')) {
+        units = units.filter(u => u.id !== id);
+        localStorage.setItem('cpl_units', JSON.stringify(units));
+        renderUnitsTable();
+        populateAdminDropdown();
+        populateAmUnitCheckboxes();
+      }
+    }
+
+    function renderUnitsTable() {
+      const tbody = document.getElementById('unitListRows');
+      tbody.innerHTML = units.map(u => `
+        <tr class="hover:bg-sky-50/50 transition">
+          <td class="p-2.5 font-bold text-slate-800">${u.name}</td>
+          <td class="p-2.5 font-mono text-sky-700 font-bold">${u.id}</td>
+          <td class="p-2.5 font-mono text-slate-600">${u.pass}</td>
+          <td class="p-2.5 text-right space-x-2">
+            <button onclick="editUnit('${u.id}')" class="text-sky-600 hover:text-sky-800 font-bold underline">Edit</button>
+            <button onclick="deleteUnit('${u.id}')" class="text-rose-500 hover:text-rose-700 font-bold underline">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // MANAGE AREA MANAGERS (AM)
+    function populateAmUnitCheckboxes(selectedIds = []) {
+      const container = document.getElementById('amUnitsCheckboxList');
+      if (units.length === 0) {
+        container.innerHTML = '<span class="text-slate-400">Please register units first.</span>';
+        return;
+      }
+      container.innerHTML = units.map(u => `
+        <label class="flex items-center gap-2 cursor-pointer hover:text-sky-800 py-0.5">
+          <input type="checkbox" value="${u.id}" class="am-unit-cb" ${selectedIds.includes(u.id) ? 'checked' : ''}>
+          <span>${u.name} <code class="text-[10px] text-slate-400">(${u.id})</code></span>
+        </label>
+      `).join('');
+    }
+
+    function handleSaveManager(e) {
+      e.preventDefault();
+      const origId = document.getElementById('editAmOriginalId').value;
+      const name = document.getElementById('amName').value.trim();
+      const id = document.getElementById('amId').value.trim().toLowerCase();
+      const pass = document.getElementById('amPass').value.trim();
+
+      const checkedUnits = [];
+      document.querySelectorAll('.am-unit-cb:checked').forEach(cb => checkedUnits.push(cb.value));
+
+      if (origId) {
+        const idx = managers.findIndex(m => m.id === origId);
+        if (idx !== -1) {
+          managers[idx] = { id, name, pass, assignedUnits: checkedUnits };
+          alert('Area Manager successfully updated!');
+        }
+      } else {
+        if (managers.some(m => m.id === id)) {
+          alert('Manager ID already exists!');
+          return;
+        }
+        managers.push({ id, name, pass, assignedUnits: checkedUnits });
+        alert('Area Manager successfully created!');
+      }
+
+      localStorage.setItem('cpl_managers', JSON.stringify(managers));
+      resetAmForm();
+      renderManagersTable();
+    }
+
+    function editManager(id) {
+      const m = managers.find(item => item.id === id);
+      if (!m) return;
+      document.getElementById('editAmOriginalId').value = m.id;
+      document.getElementById('amName').value = m.name;
+      document.getElementById('amId').value = m.id;
+      document.getElementById('amPass').value = m.pass;
+      populateAmUnitCheckboxes(m.assignedUnits || []);
+      document.getElementById('amFormHeading').innerText = '✏️ Edit Area Manager';
+      document.getElementById('saveAmBtn').innerText = 'Update Manager';
+      document.getElementById('cancelEditAmBtn').classList.remove('hidden');
+    }
+
+    function resetAmForm() {
+      document.getElementById('editAmOriginalId').value = '';
+      document.getElementById('amName').value = '';
+      document.getElementById('amId').value = '';
+      document.getElementById('amPass').value = '';
+      populateAmUnitCheckboxes([]);
+      document.getElementById('amFormHeading').innerText = '➕ Add Area Manager';
+      document.getElementById('saveAmBtn').innerText = 'Save Area Manager';
+      document.getElementById('cancelEditAmBtn').classList.add('hidden');
+    }
+
+    function deleteManager(id) {
+      if (confirm('Are you sure you want to remove this Area Manager?')) {
+        managers = managers.filter(m => m.id !== id);
+        localStorage.setItem('cpl_managers', JSON.stringify(managers));
+        renderManagersTable();
+      }
+    }
+
+    function renderManagersTable() {
+      const tbody = document.getElementById('amListRows');
+      tbody.innerHTML = managers.map(m => {
+        const unitCount = (m.assignedUnits || []).length;
+        return `
+          <tr class="hover:bg-sky-50/50 transition">
+            <td class="p-2.5 font-bold text-slate-800">${m.name}</td>
+            <td class="p-2.5 font-mono text-sky-700 font-bold">${m.id}</td>
+            <td class="p-2.5 font-mono text-slate-600">${m.pass}</td>
+            <td class="p-2.5"><span class="bg-sky-100 text-sky-800 px-2 py-0.5 rounded text-[10px] font-bold">${unitCount} Units Assigned</span></td>
+            <td class="p-2.5 text-right space-x-2">
+              <button onclick="editManager('${m.id}')" class="text-sky-600 hover:text-sky-800 font-bold underline">Edit</button>
+              <button onclick="deleteManager('${m.id}')" class="text-rose-500 hover:text-rose-700 font-bold underline">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // UPDATE ADMIN CREDENTIALS & SECURITY KEY
+    function handleUpdateAdminCredentials(e) {
+      e.preventDefault();
+      const newId = document.getElementById('adminNewId').value.trim();
+      const newPass = document.getElementById('adminNewPass').value.trim();
+      const confirmPass = document.getElementById('adminConfirmPass').value.trim();
+      const secKey = document.getElementById('adminSecKey').value.trim();
+
+      if (newPass !== confirmPass) {
+        alert('Passwords do not match!');
+        return;
+      }
+
+      adminCredentials = { id: newId, pass: newPass, secKey: secKey };
+      localStorage.setItem('cpl_admin_creds', JSON.stringify(adminCredentials));
+      alert('Security Settings successfully updated!');
+      document.getElementById('adminNewPass').value = '';
+      document.getElementById('adminConfirmPass').value = '';
+    }
+
+    function manualWeeklyReset() {
+      if (confirm('Are you sure you want to archive current week data?')) {
+        kpiData = [];
+        localStorage.setItem('cpl_kpi_data', JSON.stringify([]));
+        localStorage.setItem('cpl_last_reset_time', Date.now().toString());
+        alert('All week data cleared! System reset.');
+        renderAdminGrid();
+        renderOverviewHub();
+      }
+    }
+
+    // CSV EXPORT 1: MATRIX CSV EXPORT (WITH DATE FILTER & WORKING AVG %)
+    function exportOverviewMatrixCSV() {
+      const allowedUnits = getAccessibleUnits();
+      if (allowedUnits.length === 0) {
+        alert('No data available to export!');
+        return;
+      }
+
+      const fromDate = document.getElementById('matrixFromDate').value;
+      const toDate = document.getElementById('matrixToDate').value;
+
+      let csv = "Unit Name,Open Time,Close Time,Pending Purchase %,Rejection %,Orders Taken,Home Deliveries,Cards Registered,App Downloads,Calls Made,Free Health Checks,Pharmacy Sales,Generic Sales,Diagnostic Sales,Cendana Sales,Pharmacy Footfall,Diagnostic Footfall,Working Avg %\r\n";
+
+      allowedUnits.forEach(u => {
+        let uRecs = kpiData.filter(d => d.unitId === u.id);
+        if (fromDate) uRecs = uRecs.filter(d => d.date >= fromDate);
+        if (toDate) uRecs = uRecs.filter(d => d.date <= toDate);
+
+        let uPharma = 0, uGeneric = 0, uDiag = 0, uCendana = 0, uOrders = 0, uHome = 0;
+        let uCards = 0, uApp = 0, uCalls = 0, uHealth = 0;
+        let uFootfall = 0, uDiagFootfall = 0, rejSum = 0, pendSum = 0;
+        let lastOpen = '-', lastClose = '-';
+
+        if (uRecs.length > 0) {
+          const sorted = [...uRecs].sort((a,b) => b.date.localeCompare(a.date));
+          lastOpen = sorted[0].openTime || '-';
+          lastClose = sorted[0].closeTime || '-';
+
+          uRecs.forEach(r => {
+            uPharma += (r.pharmaSales || 0);
+            uGeneric += (r.genericSales || 0);
+            uDiag += (r.diagSales || 0);
+            uCendana += (r.cendanaSales || 0);
+            uOrders += (r.orders || 0);
+            uHome += (r.homeDel || 0);
+            uCards += (r.cards || 0);
+            uApp += (r.app || 0);
+            uCalls += (r.calls || 0);
+            uHealth += (r.health || 0);
+            uFootfall += (r.pharmaFootfall || 0);
+            uDiagFootfall += (r.diagFootfall || 0);
+            rejSum += (r.rejection || 0);
+            pendSum += (r.pendingPurchase || 0);
+          });
+        }
+
+        const avgRej = uRecs.length > 0 ? (rejSum / uRecs.length).toFixed(1) : '0.0';
+        const avgPend = uRecs.length > 0 ? (pendSum / uRecs.length).toFixed(1) : '0.0';
+        const workingAvgPct = computeWorkingAvgPercentage(uRecs);
+
+        csv += `"${u.name}","${lastOpen}","${lastClose}",${avgPend},${avgRej},${uOrders},${uHome},${uCards},${uApp},${uCalls},${uHealth},${Math.round(uPharma)},${Math.round(uGeneric)},${Math.round(uDiag)},${Math.round(uCendana)},${uFootfall},${uDiagFootfall},"${workingAvgPct}"\r\n`;
+      });
+
+      downloadFile(csv, `CPL_Matrix_Summary_${new Date().toISOString().slice(0, 10)}.csv`);
+    }
+
+    // CSV EXPORT 2: SPREADSHEET 30-DAY GRID EXPORT
+    function exportMatrixCSV(records, totalDays = 30, filename = 'CPL_Report') {
+      let csv = "KPI,Unit,";
+      for (let i = 1; i <= totalDays; i++) {
+        csv += `${i},`;
+      }
+      csv += "Monthly Avg\r\n";
+
+      let currentCategory = '';
+
+      METRIC_SCHEMA.forEach(metric => {
+        if (metric.cat !== currentCategory) {
+          csv += `--- ${metric.cat} ---\r\n`;
+          currentCategory = metric.cat;
+        }
+
+        let dayValues = [];
+        let filledCount = 0;
+        let sum = 0;
+
+        for (let d = 1; d <= totalDays; d++) {
+          const rec = records.find(r => new Date(r.date).getDate() === d);
+          if (rec && rec[metric.key] !== undefined && rec[metric.key] !== '') {
+            dayValues.push(rec[metric.key]);
+            if (metric.isNumeric) {
+              const val = parseFloat(rec[metric.key]);
+              sum += val;
+              if (val !== 0) filledCount++;
+            }
+          } else {
+            dayValues.push('');
+          }
+        }
+
+        let avgText = '-';
+        if (metric.isNumeric) {
+          if (filledCount > 0) {
+            const rawAvg = sum / filledCount;
+            avgText = (metric.unit === '₹') ? Math.round(rawAvg) : rawAvg.toFixed(1);
+          } else {
+            avgText = '0.0';
+          }
+        } else if (metric.isTime) {
+          const validTimes = dayValues.filter(t => t && t.includes(':'));
+          if (validTimes.length > 0) {
+            let totalMins = 0;
+            validTimes.forEach(t => {
+              const parts = t.split(':');
+              totalMins += parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            });
+            const avgMins = Math.round(totalMins / validTimes.length);
+            const hrs = String(Math.floor(avgMins / 60)).padStart(2, '0');
+            const mins = String(avgMins % 60).padStart(2, '0');
+            avgText = `${hrs}:${mins}`;
+          }
+        }
+
+        csv += `"${metric.name}","${metric.unit}",`;
+        dayValues.forEach(val => {
+          csv += `"${val}",`;
+        });
+        csv += `"${avgText}"\r\n`;
+      });
+
+      downloadFile(csv, `${filename}_${new Date().toISOString().slice(0, 10)}.csv`);
+    }
+
+    function downloadFile(content, filename) {
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function exportCurrentUnitExcel() {
+      const records = kpiData.filter(d => d.unitId === currentUser.id);
+      exportMatrixCSV(records, 30, `CPL_${currentUser.name.replace(/\s+/g, '_')}`);
+    }
+
+    function exportAdminDataExcel() {
+      const uFilter = document.getElementById('adminUnitFilter').value;
+      const mFilter = document.getElementById('adminMonthFilter').value;
+      const allowedUnits = getAccessibleUnits();
+      const allowedIds = allowedUnits.map(u => u.id);
+
+      let filtered = kpiData.filter(d => {
+        if (!allowedIds.includes(d.unitId)) return false;
+        let matchUnit = (uFilter === 'ALL' || d.unitId === uFilter);
+        let matchMonth = (!mFilter || d.date.startsWith(mFilter));
+        return matchUnit && matchMonth;
+      });
+
+      const title = currentUser.role === 'ADMIN' ? "CPL_Master_Grid_Report" : `CPL_AM_${currentUser.name.replace(/\s+/g, '_')}`;
+      exportMatrixCSV(filtered, 30, title);
+    }
+  </script>
+</body>
+</html>
